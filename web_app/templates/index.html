@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Pitching Predictor</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #f3f3f3; padding: 40px; }
+        .container { background: white; padding: 25px; max-width: 700px; margin: auto; border-radius: 12px; box-shadow: 0px 4px 12px rgba(0,0,0,0.1); }
+        label { font-weight: bold; }
+        input, select { width: 100%; padding: 10px; margin-top: 6px; margin-bottom: 14px; border-radius: 8px; border: 1px solid #ccc; }
+        button { width: 100%; padding: 12px; background: #007bff; color: white; font-size: 16px; border: none; border-radius: 8px; cursor: pointer; }
+        button:hover { background: #005fcc; }
+        .result, .error { margin-top: 20px; padding: 15px; border-radius: 8px; }
+        .result { background: #e9f7ef; border: 1px solid #27ae60; }
+        .error { background: #fdecea; border: 1px solid #c0392b; color: #c0392b; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-top: 15px; }
+        .stat-box { background: #f0f4ff; border: 1px solid #a0c4ff; border-radius: 12px; padding: 12px; text-align: center; box-shadow: 0 2px 6px rgba(0,0,0,0.1); }
+        .stat-name { font-weight: bold; color: #333; margin-bottom: 6px; }
+        .stat-value { font-size: 1.4em; color: #1d4ed8; }
+        .images-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
+        .images-row img { max-width: 120px; border-radius: 50%; border: 2px solid #007bff; }
+        .images-row .team-logo img { border-radius: 0; border: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Pitching Predictor</h2>
+    <form method="POST">
+        <label>Model</label>
+        <select name="model">
+            <option value="adamNet">Adam Neural Net</option>
+            <option value="linearRegression">Linear Regression</option>
+            <option value="randomForest">Random Forest</option>
+        </select>
+
+        <label>Pitcher Name</label>
+        <input type="text" name="pitcher" placeholder="e.g. Corbin Burnes" required>
+
+        <label>Opponent Team</label>
+        <input type="text" name="team" placeholder="e.g. Cardinals or STL" required>
+
+        <label>Home or Away</label>
+        <select name="homeAway">
+            <option value="Home">Home</option>
+            <option value="Away">Away</option>
+        </select>
+
+        <button type="submit">Predict</button>
+    </form>
+
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
+
+    {% if prediction %}
+        <div class="result">
+            <h3>Prediction (Model: {{ model_name }})</h3>
+            
+            <div class="images-row">
+                <div class="pitcher-photo" style="text-align:center;">
+                    <img src="{{ pitcher_img }}" alt="Pitcher">
+                    <p><strong>{{ pitcher }}</strong></p>
+                </div>
+                <div class="team-logo" style="text-align:center;">
+                    <img src="{{ team_logo_img }}" alt="Team Logo">
+                    <p><strong>{{ opponent_team_name }}</strong></p>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                {% for key, value in prediction.items() %}
+                    <div class="stat-box">
+                        <div class="stat-name">{{ key }}</div>
+                        <div class="stat-value">{{ value | round(2) }}</div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+    {% endif %}
+</div>
+</body>
+</html>
