@@ -53,6 +53,7 @@ def get_pitcher_photo_url(name):
 def get_team_logo_url(team_abbr):
     return f' https://cdn.ssref.net/req/202510241/tlogo/br/{team_abbr}.png'
 
+# This index function was written by Gemini
 @app.route("/", methods=["GET", "POST"])
 def index():
     prediction = None

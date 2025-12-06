@@ -35,6 +35,7 @@ PA_EVENTS = [
 
 
 # Mapping of common team names to the 3-letter abbreviation used in Statcast data
+# chatGPT wrote these
 TEAM_ABBREVIATIONS = {
     'Arizona Diamondbacks': 'ARI', 'Atlanta Braves': 'ATL', 'Baltimore Orioles': 'BAL', 
     'Boston Red Sox': 'BOS', 'Chicago Cubs': 'CHC', 'Chicago White Sox': 'CHW', 
@@ -89,6 +90,7 @@ def get_pitcher_id(name):
 def process_and_append_chunk(start_dt, end_dt, data_file, full_process_history=None):
     df_raw = statcast(start_dt=start_dt, end_dt=end_dt) 
     
+    # used pandas docs
     df_raw['game_date'] = pd.to_datetime(df_raw['game_date'])
     if 'pitcher' in df_raw.columns:
             df_raw.rename(columns={'pitcher': 'pitcher_id'}, inplace=True) 
@@ -107,6 +109,7 @@ def process_and_append_chunk(start_dt, end_dt, data_file, full_process_history=N
     gc.collect()
 
 def aggregate_and_engineer_features(df_raw, history_df=None):
+    # chatGPT helped with the df logic of this function
     df = df_raw.dropna(subset=['pitch_type']).copy()
     df_pa = df[df['events'].isin(PA_EVENTS)].copy()
     df_pa['stand_type'] = df_pa['stand'].apply(lambda x: '_LHB' if x == 'L' else '_RHB')
@@ -124,7 +127,8 @@ def aggregate_and_engineer_features(df_raw, history_df=None):
         values=['SO', 'H', 'BB', 'PA'], fill_value=0
     ).reset_index()
     split_agg_pivot.columns = [f'{stat}{stand}' for stat, stand in split_agg_pivot.columns]
-    
+
+    # chatGPT wrote this groupby call
     agg_totals = df.groupby(['game_date', 'pitcher_id']).agg(
         Pitches=('pitch_type', 'count'),
         Outs_Recorded=('outs_when_up', lambda x: x[x.diff().fillna(1) != 0].sum()),
@@ -135,6 +139,7 @@ def aggregate_and_engineer_features(df_raw, history_df=None):
     ).reset_index()
 
     # Merge Aggregations
+    # used pandas docs
     df_master = pd.merge(agg_totals, split_agg_pivot, on=['game_date', 'pitcher_id'], how='left')
     
     required_split_cols = [f'{stat}{stand}' for stat in ['SO', 'H', 'BB', 'PA'] for stand in ['_LHB', '_RHB']]
@@ -142,6 +147,7 @@ def aggregate_and_engineer_features(df_raw, history_df=None):
         if col not in df_master.columns:
             df_master[col] = 0
     
+    # pandas docs
     df_master.fillna(0, inplace=True)
 
     # Metric Calculation
@@ -162,10 +168,12 @@ def aggregate_and_engineer_features(df_raw, history_df=None):
              df_combined = df_master.copy() 
         else:
             history_df_subset = history_df[required_cols]
+            # pandas docs
             df_combined = pd.concat([history_df_subset, df_master], ignore_index=True)
     else:
         df_combined = df_master.copy()
 
+    # chatGPT wrote most of the df_combined logic. We edited and optimized
     df_combined = df_combined.sort_values(by=['pitcher_id', 'game_date']).reset_index(drop=True)
 
     pitcher_groups = df_combined.groupby('pitcher_id')
@@ -198,6 +206,7 @@ def aggregate_and_engineer_features(df_raw, history_df=None):
 
 def prepare_and_split_data(df):
     for col in TARGET_STATS:
+        # pandas docs
         df[col] = pd.to_numeric(df[col], errors='coerce')
     df = df.dropna(subset=TARGET_STATS)
 
@@ -231,6 +240,7 @@ def prepare_and_split_data(df):
 
     X = pd.get_dummies(X, drop_first=True)
     
+    # SKLearn docs
     X_train_val, X_test, y_train_val, y_test = train_test_split(
         X, y, test_size=0.2, random_state=42
     )
@@ -238,6 +248,7 @@ def prepare_and_split_data(df):
     return X_train_val, y_train_val, X_test, y_test
 
 def train_and_evaluate_models(X_train_val, y_train_val):
+    # sklearn docs for function calls
     models = {
         # 'Adam Neural Net (MLP)': MLPRegressor(
         #     solver='adam',
@@ -259,6 +270,7 @@ def train_and_evaluate_models(X_train_val, y_train_val):
         kf = KFold(n_splits=10, shuffle=True)
         
         for name, model in models.items():
+            # sklearn docs
             mse_scores = -cross_val_score(
                 model, X_train_val, y_target, 
                 cv=kf, scoring='neg_mean_squared_error', n_jobs=1
@@ -282,6 +294,7 @@ def load_or_train_model(X_tv, y_tv, model_path):
     
     cv_results, trained_models = train_and_evaluate_models(X_tv, y_tv)
     
+    # used sklearn docs
     # rf_model = LinearRegression()
     rf_model = RandomForestRegressor(n_estimators=200)
     # rf_model = MLPRegressor(
@@ -300,6 +313,8 @@ def load_or_train_model(X_tv, y_tv, model_path):
         'timestamp': datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     }
     with open(model_path, 'wb') as f:
+        # used pickle docs
+        # chatGPT idea to use pickle
         pickle.dump(rf_model_data, f)
 
     return rf_model, cv_results
@@ -319,6 +334,8 @@ def create_performance_visuals(cv_results, y_test, y_pred_test, target_stats, be
         residuals = y_actual - y_predicted
         
         # Actual vs. Predicted Scatter Plot
+        # seaborn docs
+        # chatGPT wrote the plotting logic
         ax1 = axes[i, 0]
         sns.scatterplot(x=y_actual, y=y_predicted, ax=ax1, color='#1f77b4', alpha=0.6)
         
@@ -356,6 +373,8 @@ def predict_new_game(model, feature_columns, year, opponent_team, home_away, pas
     
     new_data = pd.DataFrame([all_features])
     
+    # chatGPT idea to use get_dummies
+    # pandas docs
     new_data_encoded = pd.get_dummies(new_data, drop_first=True)
     new_features = new_data_encoded.reindex(columns=feature_columns, fill_value=0)
     new_features = new_features.filter(items=feature_columns)
@@ -421,9 +440,11 @@ if __name__ == '__main__':
         
         X_tv, y_tv, X_test, y_test = prepare_and_split_data(df_full)
         rf_model, cv_results = load_or_train_model(X_tv, y_tv, MODEL_FILE)
+
         if rf_model is not None:
             y_pred_test = rf_model.predict(X_test)
             r2 = r2_score(y_test, y_pred_test)
+            print('r2; ', r2)
             
             # create_performance_visuals(cv_results, y_test, y_pred_test, TARGET_STATS, best_model_name="MLP Regressor")
 

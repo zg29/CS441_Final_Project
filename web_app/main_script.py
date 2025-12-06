@@ -34,6 +34,7 @@ PA_EVENTS = [
 ]
 
 # Mapping of common team names to the 3-letter abbreviation used in Statcast data
+# ChatGPT generated these names
 TEAM_ABBREVIATIONS = {
     'Arizona Diamondbacks': 'ARI', 'Atlanta Braves': 'ATL', 'Baltimore Orioles': 'BAL', 
     'Boston Red Sox': 'BOS', 'Chicago Cubs': 'CHC', 'Chicago White Sox': 'CHW', 
@@ -67,6 +68,7 @@ FEATURE_COLUMNS = [
     'OppTeam_SF', 'OppTeam_STL', 'OppTeam_TB', 'OppTeam_TEX',
     'OppTeam_TOR', 'OppTeam_WSH'
 ]
+
 
 def get_team_abbreviation(team_name):
     normalized_name = team_name.strip().title()
@@ -107,6 +109,8 @@ def predict_new_game(model, feature_columns, year, opponent_team, home_away, pas
     }
     
     new_data = pd.DataFrame([all_features])
+    # used pandas docs
+    # chatGPT idea to use get_dummies
     new_data_encoded = pd.get_dummies(new_data, drop_first=True)
     new_features = new_data_encoded.reindex(columns=feature_columns, fill_value=0)
     
@@ -122,12 +126,15 @@ def load_or_train_model(model_path):
     if os.path.exists(model_path):
         try:
             with open(model_path, 'rb') as f:
+                # used pickle docs
                 rf_model_data = pickle.load(f)
                 rf_model = rf_model_data['model']
                 cv_results = rf_model_data['cv_results']
                 return rf_model, cv_results
         except:
             return
+        
+# chatgpt helped with 
 def load_data():
     if os.path.exists(DATA_FILE):
         df = pd.read_csv(DATA_FILE, parse_dates=['game_date'])
