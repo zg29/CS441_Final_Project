@@ -3,6 +3,7 @@ https://uofi.box.com/s/b06a3lmfvuwnkdnpm2ndeaxdohh2d0e6
 
 Instructions to run:
 1. Clone Repo
-2. Navigate to the 'web_app' directory
-3. Run 'python server.py'
-4. Navigate to http://127.0.0.1:5000/ in your web browser
+2. Run 'pip install -r requirements.txt'
+3. Navigate to the 'web_app' directory
+4. Run 'python server.py'
+5. Navigate to http://127.0.0.1:5000/ in your web browser
