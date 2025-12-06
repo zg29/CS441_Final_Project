@@ -19,9 +19,10 @@ sns.set_style("whitegrid")
 plt.rcParams['figure.figsize'] = (12, 8)
 plt.rcParams['font.sans-serif'] = ['Inter', 'DejaVu Sans']
 
-DATA_FILE = os.path.join(os.path.expanduser("~"),'UIUC/fa25/CS441/final_projecf/repo/data/pitching_master_data_aggregated.csv')
+DATA_FILE = '/home/zg29/UIUC/fa25/CS441/final_projecf/repo/data/pitching_master_data_aggregated.csv'
 MODEL_FILE = str(input("Input Model:\n"))
-MODEL_FILE = os.path.join(os.path.expanduser("~"),'/UIUC/fa25/CS441/final_projecf/repo/web_app/models' + MODEL_FILE)
+MODEL_FILE = ('/home/zg29/UIUC/fa25/CS441/final_projecf/repo/web_app/models/' + MODEL_FILE)
+
 TARGET_STATS = ['Pitches', 'SO_LHB', 'SO_RHB', 'IP_Outs', 'ER', 'WHIP'] 
 FULL_START_YEAR = 2018
 FULL_END_YEAR = 2023 
@@ -245,8 +246,8 @@ def train_and_evaluate_models(X_train_val, y_train_val):
         #     n_iter_no_change=20, 
         #     validation_fraction=0.15,
         #     learning_rate='adaptive')
-        'linear' : LinearRegression()
-        # 'randomForest' : RandomForestRegressor(n_estimators=200)
+        # 'linear' : LinearRegression()
+        'randomForest' : RandomForestRegressor(n_estimators=200)
     }
     
     results = {}
@@ -281,8 +282,8 @@ def load_or_train_model(X_tv, y_tv, model_path):
     
     cv_results, trained_models = train_and_evaluate_models(X_tv, y_tv)
     
-    rf_model = LinearRegression()
-    # rf_model = RandomForestRegressor(n_estimators=200)
+    # rf_model = LinearRegression()
+    rf_model = RandomForestRegressor(n_estimators=200)
     # rf_model = MLPRegressor(
     #     solver='adam',
     #     max_iter=5000,
@@ -368,6 +369,7 @@ def predict_new_game(model, feature_columns, year, opponent_team, home_away, pas
 
 if __name__ == '__main__':
     if not os.path.exists(DATA_FILE):
+        print("file exists")
         all_years = list(range(FULL_START_YEAR, FULL_END_YEAR + 1))
         history_df = pd.DataFrame()
         
@@ -393,7 +395,7 @@ if __name__ == '__main__':
         
     gc.collect() 
 
-    if df_full.empty or len(df_full) < 10: 
+    if True: 
         print("Could not proceed due to insufficient data.")
 
         # apply transformations
@@ -423,7 +425,7 @@ if __name__ == '__main__':
             y_pred_test = rf_model.predict(X_test)
             r2 = r2_score(y_test, y_pred_test)
             
-            create_performance_visuals(cv_results, y_test, y_pred_test, TARGET_STATS, best_model_name="MLP Regressor")
+            # create_performance_visuals(cv_results, y_test, y_pred_test, TARGET_STATS, best_model_name="MLP Regressor")
 
             pitcher_name = input("Enter Pitcher's Full Name (e.g., Zack Greinke): ")
             opponent_team_name = input("Enter Opponent Team Name (e.g., Cardinals or STL): ")
